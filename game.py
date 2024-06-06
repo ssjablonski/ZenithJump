@@ -11,7 +11,7 @@ SCREEN_WIDTH = 400
 SCREEN_HEIGHT = 600
 SCROLL_THRESH = 200
 GRAVITY = 1
-MAX_PLATFORMS = 10
+MAX_PLATFORMS = 13
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
 PANEL = (101, 165, 221)
@@ -32,6 +32,66 @@ font_small = pygame.font.SysFont('Lucida Sans', 20)
 font_big = pygame.font.SysFont('Lucida Sans', 24)
 
 # Klasy
+# class Player:
+#     def __init__(self, x, y):
+#         self.image = pygame.transform.scale(player_image, (45, 45))
+#         self.width = 25
+#         self.height = 40
+#         self.rect = pygame.Rect(0, 0, self.width, self.height)
+#         self.rect.center = (x, y)
+#         self.vel_y = 0
+#         self.flip = False
+
+#     def draw(self, screen):
+#         screen.blit(pygame.transform.flip(self.image, self.flip, False), (self.rect.x - 12, self.rect.y - 5))
+
+#     def move(self, platform_group, action=None, is_training=False):
+#         scroll = 0
+#         dx = 0
+#         dy = 0
+
+#         if not is_training:
+#             key = pygame.key.get_pressed()
+#             if key[pygame.K_LEFT]:
+#                 action = 0
+#             elif key[pygame.K_RIGHT]:
+#                 action = 1
+#             else:
+#                 action = 2
+
+#         if action == 0:  # Lewo
+#             dx = -10
+#             self.flip = True
+#         elif action == 1:  # Prawo
+#             dx = 10
+#             self.flip = False
+
+#         self.vel_y += GRAVITY
+#         dy += self.vel_y
+
+#         if self.rect.left + dx < 0:
+#             dx = -self.rect.left
+#         if self.rect.right + dx > SCREEN_WIDTH:
+#             dx = SCREEN_WIDTH - self.rect.right
+
+#         for platform in platform_group:
+#             if platform.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
+#                 if self.rect.bottom < platform.rect.centery:
+#                     if self.vel_y > 0:
+#                         self.rect.bottom = platform.rect.top
+#                         dy = 0
+#                         self.vel_y = -20
+
+#         if self.rect.top <= SCROLL_THRESH:
+#             if self.vel_y < 0:
+#                 scroll = -dy
+
+#         self.rect.x += dx
+#         self.rect.y += dy + scroll
+#         self.mask = pygame.mask.from_surface(self.image)
+
+#         return scroll
+
 class Player:
     def __init__(self, x, y):
         self.image = pygame.transform.scale(player_image, (45, 45))
@@ -69,10 +129,11 @@ class Player:
         self.vel_y += GRAVITY
         dy += self.vel_y
 
+        # Teleportacja gracza, gdy przechodzi przez krawędź ekranu
         if self.rect.left + dx < 0:
-            dx = -self.rect.left
-        if self.rect.right + dx > SCREEN_WIDTH:
-            dx = SCREEN_WIDTH - self.rect.right
+            self.rect.right = SCREEN_WIDTH
+        elif self.rect.right + dx > SCREEN_WIDTH:
+            self.rect.left = 0
 
         for platform in platform_group:
             if platform.rect.colliderect(self.rect.x, self.rect.y + dy, self.width, self.height):
@@ -91,6 +152,7 @@ class Player:
         self.mask = pygame.mask.from_surface(self.image)
 
         return scroll
+
 
 class Platform(pygame.sprite.Sprite):
     def __init__(self, x, y, width, moving):
@@ -206,17 +268,17 @@ class Game:
             if len(self.platform_group) < MAX_PLATFORMS:
                 last_platform_y = min(platform.rect.y for platform in self.platform_group)
                 while len(self.platform_group) < MAX_PLATFORMS:
-                    p_w = random.randint(40, 60)
+                    p_w = random.randint(50, 70)
                     p_x = random.randint(0, SCREEN_WIDTH - p_w)
-                    p_y = last_platform_y - random.randint(80, 120)
+                    p_y = last_platform_y - random.randint(70, 110)
                     p_type = random.randint(1, 2)
-                    p_moving = p_type == 1 and self.score > 500
+                    p_moving = p_type == 1 and self.score > 300
                     self.platform_group.add(Platform(p_x, p_y, p_w, p_moving))
                     last_platform_y = p_y
 
             self.platform_group.update(self.scroll)
 
-            if len(self.enemy_group) == 0 and self.score > 1000:
+            if len(self.enemy_group) == 0 and self.score > 2000:
                 self.enemy_group.add(Enemy(SCREEN_WIDTH, 100, enemy_sheet, 1.5))
 
             self.enemy_group.update(self.scroll, SCREEN_WIDTH)
